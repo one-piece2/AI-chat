@@ -48,13 +48,26 @@ const createWindow = async () => {
   ipcMain.on("start-chat", async (event, data: CreateChatProps) => {
     const { messages, providerName, selectedModel, messageId } = data;
 
-    const ChatModel = createProvider(providerName);
-    const response = await ChatModel.chat(messages, selectedModel);
-    for await (const chunk of response) {
-
+    try {
+      const ChatModel = createProvider(providerName);
+      const response = await ChatModel.chat(messages, selectedModel);
+      for await (const chunk of response) {
+        mainWindow.webContents.send("update-message", {
+          messageId,
+          data: chunk,
+        });
+      }
+    } catch (error: any) {
+      console.error("start-chat error", error);
       mainWindow.webContents.send("update-message", {
         messageId,
-        data: chunk,
+        data: {
+          is_end: true,
+          result:
+            (error && (error.message || (typeof error === "string" ? error : ""))) ||
+            "API 调用失败",
+          is_error: true,
+        },
       });
     }
   });

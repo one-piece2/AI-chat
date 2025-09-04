@@ -1,8 +1,7 @@
 import { BaseProvider } from "./BaseProvider";
 import { ChatCompletion } from "@baiducloud/qianfan";
-import { ChatMessage } from "@baiducloud/qianfan/dist/src/interface";
+
 import { ChatMessageProps, UniversalChunkProps } from "../types";
-import OpenAI from "openai";
 
 export class QianfanProvieder extends BaseProvider {
   private client: any;

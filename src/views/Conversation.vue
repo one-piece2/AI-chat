@@ -18,7 +18,9 @@ const conversation = computed(() =>
 );
 const sendedMessages = computed(() =>
   filtermessage.value
-    .filter((message) => message.status !== "error")
+    .filter(
+      (message) => message.status !== "loading" && message.status !== "error",
+    )
     .map((message) => {
       return {
         role: message.type === "question" ? "user" : ("assistant" as any),

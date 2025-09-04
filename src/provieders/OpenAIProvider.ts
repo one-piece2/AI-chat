@@ -8,7 +8,7 @@ export class OpenAIProvider extends BaseProvider {
   constructor(apiKey: string, baseURL: string) {
     super();
     this.client = new OpenAI({
-      apiKey: apiKey,
+      apiKey,
       baseURL,
     });
   }
