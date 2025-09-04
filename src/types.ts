@@ -57,3 +57,14 @@ export interface UniversalChunkProps {
   is_end: boolean;
   result: string;
 }
+
+export type Language = "zh" | "en";
+export interface AppConfig {
+  language: Language;
+  fontSize: number;
+}
+
+export type ProviderConfigValues = Record<string, any>;
+export interface FullConfigFile extends AppConfig {
+  providers: Record<string, ProviderConfigValues>;
+}

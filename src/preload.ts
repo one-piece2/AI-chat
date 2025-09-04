@@ -11,3 +11,13 @@ contextBridge.exposeInMainWorld("API", {
   handleImageFie: (ImageFilename: string, ImageFilcontent: ArrayBuffer) =>
     ipcRenderer.invoke("handle-image-file", ImageFilename, ImageFilcontent),
 });
+
+contextBridge.exposeInMainWorld("electronAPI", {
+  getConfig: () => ipcRenderer.invoke("get-config"),
+  updateConfig: (config: Partial<{ language: "zh" | "en"; fontSize: number }>) =>
+    ipcRenderer.invoke("update-config", config),
+  getProviderConfig: (providerName: string) =>
+    ipcRenderer.invoke("get-provider-config", providerName),
+  updateProviderConfig: (providerName: string, values: Record<string, any>) =>
+    ipcRenderer.invoke("update-provider-config", providerName, values),
+});

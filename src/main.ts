@@ -11,12 +11,14 @@ import "dotenv/config";
 import fs from "fs/promises";
 
 import { lookup } from "mime-types";
+import { ConfigManager } from "./ConfigManager";
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
 
 const createWindow = async () => {
+  const configManager = ConfigManager.getInstance();
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1024,
@@ -101,6 +103,23 @@ const createWindow = async () => {
         console.error("文件拷贝失败：", error);
         throw error; // 抛出错误，让渲染进程捕获
       }
+    },
+  );
+
+  ipcMain.handle("get-config", async () => {
+    return await configManager.getConfig();
+  });
+  ipcMain.handle("update-config", async (event, partial) => {
+    return await configManager.updateConfig(partial ?? {});
+  });
+
+  ipcMain.handle("get-provider-config", async (event, providerName: string) => {
+    return await configManager.getProviderConfig(providerName);
+  });
+  ipcMain.handle(
+    "update-provider-config",
+    async (event, providerName: string, values: Record<string, any>) => {
+      return await configManager.updateProviderConfig(providerName, values ?? {});
     },
   );
   // and load the index.html of the app.
