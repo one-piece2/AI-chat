@@ -18,6 +18,9 @@ const onCreate = () => {
   if (inputvalue.value.trim() !== "") {
     emit("create", inputvalue.value, selectedImage || undefined);
     inputvalue.value = "";
+
+    Imageurl.value = "";
+    selectedImage = null;
   }
 };
 const Imageurl = ref<string>("");

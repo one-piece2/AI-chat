@@ -31,29 +31,23 @@ export const useMessageStore = defineStore("message", () => {
           item.conversationId === conversationId && item.type === "question",
       );
   };
-  const updataMessage = async (datas: UpdatgedStreamData) => {
-    // 先更新进数据库，在更新给filtermessage
-    const { messageId, data } = datas;
-    const currentMessage = items.value.find((item) => item.id === messageId);
-    if (currentMessage) {
-      const UpdatedMessage = {
-        status: data.is_end ? "finished" : ("streaming" as MessageStatus),
-        content: currentMessage.content + data.result,
-        updatedAt: new Date().toISOString(),
+  const updataMessage = async (
+    messageId: number,
+    data: Partial<MessageProps>,
+  ) => {
+    await db.message.update(messageId, data);
+    // 先找到回复的 filterMessage的Id 在更新items
+    const replyMessageId = items.value.findIndex(
+      (item) => item.id === messageId,
+    );
+    if (replyMessageId !== -1) {
+      items.value[replyMessageId] = {
+        ...items.value[replyMessageId],
+        ...data,
       };
-      await db.message.update(messageId, UpdatedMessage);
-      // 先找到回复的 filterMessage的Id
-      const replyMessageId = items.value.findIndex(
-        (item) => item.id === messageId,
-      );
-      if (replyMessageId !== -1) {
-        items.value[replyMessageId] = {
-          ...items.value[replyMessageId],
-          ...UpdatedMessage,
-        };
-      }
     }
   };
+
   const isMessageLoading = () => {
     return items.value.some(
       (item) => item.status === "loading" || item.status === "streaming",

@@ -2,24 +2,20 @@ import { app, BrowserWindow, ipcMain, protocol } from "electron";
 import path from "node:path";
 import started from "electron-squirrel-startup";
 import { CreateChatProps } from "./types";
-import { ChatCompletion } from "@baiducloud/qianfan";
-import { ChatMessage } from "@baiducloud/qianfan/dist/src/interface";
+
+import { createProvider } from "./provieders/createProvider";
 //能直接从环境变量读取的库
 import "dotenv/config";
-import OpenAI from "openai";
+
 // 把图片转化成base64
 import fs from "fs/promises";
-import { converMessages } from "./helper";
+
 import { lookup } from "mime-types";
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.DASHSCOPE_API_KEY,
-  baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-});
 const createWindow = async () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -31,9 +27,7 @@ const createWindow = async () => {
   });
   protocol.handle("safe-file", async (request) => {
     // 提取纯文件路径（去掉协议头）
-    let filepath = decodeURIComponent(
-      request.url.slice("safe-file://".length),
-    );
+    let filepath = decodeURIComponent(request.url.slice("safe-file://".length));
     // 兼容 Windows: safe-file:///C:/... 在解析后会多一个前导斜杠，需要去掉
     if (/^\/[A-Za-z]:\//.test(filepath)) {
       filepath = filepath.slice(1);
@@ -42,7 +36,8 @@ const createWindow = async () => {
     console.log("filepath", filepath);
     // 读取文件
     const data = await fs.readFile(filepath);
-    const contentType = (lookup(filepath) as string) || "application/octet-stream";
+    const contentType =
+      (lookup(filepath) as string) || "application/octet-stream";
     return new Response(data, {
       status: 200,
       headers: {
@@ -52,47 +47,15 @@ const createWindow = async () => {
   });
   ipcMain.on("start-chat", async (event, data: CreateChatProps) => {
     const { messages, providerName, selectedModel, messageId } = data;
-    const convertedMessages = await converMessages(messages);
-    if (providerName === "qianfan") {
-      const client = new ChatCompletion();
-      const stream = await client.chat(
-        {
-          messages: convertedMessages as ChatMessage[],
 
-          // 流式输出
-          stream: true,
-        },
-        selectedModel,
-      );
-      //异步迭代器，处理流式输出，记住
-      for await (const chunk of stream as AsyncIterable<any>) {
-        const { is_end, result } = chunk;
-        const content = {
-          messageId,
-          data: {
-            is_end,
-            result,
-          },
-        };
-        mainWindow.webContents.send("update-message", content);
-      }
-    } else if (providerName === "dashscope") {
-      const stream = await openai.chat.completions.create({
-        model: selectedModel, //此处以qwen-plus为例，可按需更换模型名称。模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
-        messages: convertedMessages,
-        stream: true,
+    const ChatModel = createProvider(providerName);
+    const response = await ChatModel.chat(messages, selectedModel);
+    for await (const chunk of response) {
+
+      mainWindow.webContents.send("update-message", {
+        messageId,
+        data: chunk,
       });
-      for await (const message of stream) {
-        const choice = message.choices[0];
-        const content = {
-          messageId,
-          data: {
-            is_end: choice.finish_reason == "stop",
-            result: choice.delta.content || "",
-          },
-        };
-        mainWindow.webContents.send("update-message", content);
-      }
     }
   });
   // 图片的转换先变成Buffer

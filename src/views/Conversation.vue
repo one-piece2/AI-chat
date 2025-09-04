@@ -38,6 +38,7 @@ const messageScrollToBottom = async () => {
     });
   }
 };
+//这个函数可以让你继续聊天，也带图片的。 在Home中我们也支持首次聊天的时候添加图片。
 const handleCreate = async (question: string, imagePath?: File) => {
   let Imagepath: string | undefined;
   if (question) {
@@ -92,18 +93,30 @@ const createInitialMessage = async () => {
     }
   }
 };
-
+let BackData = "";
 onMounted(async () => {
   await messageStore.getMessagesByConversationId(Number(route.params.id));
   await messageScrollToBottom();
   if (initMessageId) {
     await createInitialMessage();
   }
-  let streamContent = "";
+  //相当于注册了事件
   window.API.OnupdateMessage(async (streamData) => {
-    await messageStore.updataMessage(streamData);
+    BackData += streamData.data.result;
+    const MessageId = streamData.messageId;
+    const UpdatedMessage = {
+      status: streamData.data.is_end
+        ? "finished"
+        : ("streaming" as MessageStatus),
+      content: BackData,
+      updatedAt: new Date().toISOString(),
+    };
+    await messageStore.updataMessage(MessageId, UpdatedMessage);
     await nextTick();
     await messageScrollToBottom();
+    if (streamData.data.is_end) {
+      BackData = "";
+    }
   });
 });
 
@@ -134,7 +147,10 @@ watch(
       <MessageList ref="messageListRef" :messages="filtermessage" />
     </div>
     <div class="h-[15%] flex items-center">
-      <MessageInput :disabled="messageStore.isMessageLoading()" @create="handleCreate" />
+      <MessageInput
+        :disabled="messageStore.isMessageLoading()"
+        @create="handleCreate"
+      />
     </div>
   </div>
 </template>
