@@ -25,14 +25,15 @@ const createWindow = async () => {
   const mainWindow = new BrowserWindow({
     width: 1024,
     height: 768,
+    title: "Lyy",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
   });
-  
+
   // 创建菜单，传入 mainWindow 参数
   createAppMenu(mainWindow);
-  
+
   protocol.handle("safe-file", async (request) => {
     // 提取纯文件路径（去掉协议头）
     let filepath = decodeURIComponent(request.url.slice("safe-file://".length));
@@ -53,7 +54,7 @@ const createWindow = async () => {
       },
     });
   });
-  
+
   ipcMain.on("start-chat", async (event, data: CreateChatProps) => {
     const { messages, providerName, selectedModel, messageId } = data;
 
@@ -73,7 +74,8 @@ const createWindow = async () => {
         data: {
           is_end: true,
           result:
-            (error && (error.message || (typeof error === "string" ? error : ""))) ||
+            (error &&
+              (error.message || (typeof error === "string" ? error : ""))) ||
             "API 调用失败",
           is_error: true,
         },
@@ -126,17 +128,24 @@ const createWindow = async () => {
   ipcMain.handle(
     "update-provider-config",
     async (event, providerName: string, values: Record<string, any>) => {
-      return await configManager.updateProviderConfig(providerName, values ?? {});
+      return await configManager.updateProviderConfig(
+        providerName,
+        values ?? {},
+      );
     },
   );
-  
+
   // 右键菜单处理
-  ipcMain.on("show-context-menu", (event, conversationId, ) => {
+  ipcMain.on("show-context-menu", (event, conversationId) => {
     const template = [
       {
         label: "删除对话",
         click: () => {
-          mainWindow.webContents.send("context-menu-action", "delete", conversationId);
+          mainWindow.webContents.send(
+            "context-menu-action",
+            "delete",
+            conversationId,
+          );
         },
       },
     ];
@@ -144,10 +153,9 @@ const createWindow = async () => {
     const menu = Menu.buildFromTemplate(template);
     menu.popup({
       window: mainWindow,
-      
     });
   });
-  
+
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
