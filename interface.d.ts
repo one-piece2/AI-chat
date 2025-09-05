@@ -19,6 +19,12 @@ export interface ElectronConfigAPI {
     providerName: string,
     values: Record<string, any>,
   ) => Promise<Record<string, any>>;
+  
+  // 菜单事件监听器
+  onMenuNewConversation: (callback: () => void) => void;
+  onMenuOpenSettings: (callback: () => void) => void;
+  removeMenuNewConversation: () => void;
+  removeMenuOpenSettings: () => void;
 }
 
 declare global {

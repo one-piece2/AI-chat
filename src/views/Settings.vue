@@ -47,6 +47,7 @@ const openedProviderId = ref<string | undefined>(undefined);
 
 onMounted(async () => {
   try {
+    
     const cfg: AppConfig = await window.electronAPI.getConfig();
     language.value = cfg.language;
     fontSize.value = cfg.fontSize;
@@ -101,7 +102,7 @@ const saveProvider = async (providerName: string) => {
   // 传输前序列化为普通对象，避免含有 Proxy 导致的结构化克隆失败
   const plain = JSON.parse(JSON.stringify(values));
   await window.electronAPI.updateProviderConfig(providerName, plain);
-  alert(`${providerName} 保存成功`);
+
 };
 </script>
 

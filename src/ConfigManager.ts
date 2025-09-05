@@ -35,28 +35,43 @@ export class ConfigManager {
     const merged = this.applyDefaults(raw);
     return merged;
   }
-
+  // 更新基础配置
   public async updateConfig(partial: Partial<AppConfig>): Promise<AppConfig> {
     const raw = await this.readFull();
+    //基础配置
     const current = this.applyDefaults(raw);
+    //更新后的基础配置
     const next: AppConfig = this.applyDefaults({ ...current, ...partial });
-    const toWrite: FullConfigFile = { ...raw, ...next, providers: raw.providers || {} };
+    const toWrite: FullConfigFile = {
+      ...raw,
+      ...next,
+      providers: raw.providers || {},
+    };
     await this.writeFull(toWrite);
     this.cachedConfig = toWrite;
     return next;
   }
 
   // Provider 配置读取
-  public async getProviderConfig(providerName: string): Promise<ProviderConfigValues> {
+  public async getProviderConfig(
+    providerName: string,
+  ): Promise<ProviderConfigValues> {
     const raw = await this.readFull();
     return (raw.providers || {})[providerName] || {};
   }
 
   // Provider 配置写入（局部合并）
-  public async updateProviderConfig(providerName: string, values: ProviderConfigValues): Promise<ProviderConfigValues> {
+  public async updateProviderConfig(
+    providerName: string,
+    values: ProviderConfigValues,
+  ): Promise<ProviderConfigValues> {
+    //全部配置
     const raw = await this.readFull();
+    //现在的ProviderConfigValues
     const current = (raw.providers || {})[providerName] || {};
+    //更新后的ProviderConfigValues
     const next = { ...current, ...values };
+    // 兼容旧文件：无 providers 时补上
     const providers = { ...(raw.providers || {}), [providerName]: next };
     const toWrite: FullConfigFile = { ...raw, providers };
     await this.writeFull(toWrite);
@@ -86,9 +101,15 @@ export class ConfigManager {
   }
 
   private async writeFull(raw: FullConfigFile): Promise<void> {
+    //获取文件目录
     const dir = path.dirname(this.configFilePath);
+
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(this.configFilePath, JSON.stringify(raw, null, 2), "utf-8");
+    await fs.writeFile(
+      this.configFilePath,
+      JSON.stringify(raw, null, 2),
+      "utf-8",
+    );
   }
 
   private applyDefaults(input: Partial<FullConfigFile>): AppConfig {
@@ -99,4 +120,4 @@ export class ConfigManager {
     }
     return { language, fontSize };
   }
-} 
+}

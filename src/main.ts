@@ -12,6 +12,8 @@ import fs from "fs/promises";
 
 import { lookup } from "mime-types";
 import { ConfigManager } from "./ConfigManager";
+import { createAppMenu } from "./menu";
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();
@@ -27,6 +29,10 @@ const createWindow = async () => {
       preload: path.join(__dirname, "preload.js"),
     },
   });
+  
+  // 创建菜单，传入 mainWindow 参数
+  createAppMenu(mainWindow);
+  
   protocol.handle("safe-file", async (request) => {
     // 提取纯文件路径（去掉协议头）
     let filepath = decodeURIComponent(request.url.slice("safe-file://".length));
@@ -47,6 +53,7 @@ const createWindow = async () => {
       },
     });
   });
+  
   ipcMain.on("start-chat", async (event, data: CreateChatProps) => {
     const { messages, providerName, selectedModel, messageId } = data;
 
@@ -122,6 +129,7 @@ const createWindow = async () => {
       return await configManager.updateProviderConfig(providerName, values ?? {});
     },
   );
+  
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     await mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);

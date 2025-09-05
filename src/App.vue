@@ -6,7 +6,7 @@
       </div>
 
       <div class="h-[10%] grid grid-cols-2 gap-2 p-2">
-        <Button icon-name="radix-icons:chat-bubble" @click="handleclick">
+        <Button icon-name="radix-icons:chat-bubble" @click="handleNewConversation">
           新建聊天
         </Button>
 
@@ -28,7 +28,8 @@ import { useConversationStore } from "./stores/conversation";
 import { db, initProviders } from "./db";
 import ConversationList from "./components/ConversationList.vue";
 
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
+
 const conversationStore = useConversationStore();
 const items = computed(() => conversationStore.items);
 const router = useRouter();
@@ -36,8 +37,23 @@ const router = useRouter();
 onMounted(async () => {
   await initProviders();
   await conversationStore.getConversations();
+  
+  // 监听菜单事件
+  window.electronAPI?.onMenuNewConversation?.(handleNewConversation);
+  window.electronAPI?.onMenuOpenSettings?.(handleOpenSettings);
 });
-const handleclick = () => {
+
+onUnmounted(() => {
+  // 清理事件监听器
+  window.electronAPI?.removeMenuNewConversation?.();
+  window.electronAPI?.removeMenuOpenSettings?.();
+});
+
+const handleNewConversation = () => {
   router.push("/");
+};
+
+const handleOpenSettings = () => {
+  router.push("/settings");
 };
 </script>
