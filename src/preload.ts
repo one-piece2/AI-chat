@@ -35,4 +35,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
   removeMenuOpenSettings: () => {
     ipcRenderer.removeAllListeners("menu-open-settings");
   },
+  
+  // 右键菜单
+  showContextMenu: (conversationId: number ) => {
+    ipcRenderer.send("show-context-menu", conversationId);
+  },
+  onContextMenuAction: (callback: (action: string, conversationId: number) => void) => {
+    ipcRenderer.on("context-menu-action", (event, action, conversationId) => {
+      callback(action, conversationId);
+    });
+  },
+  removeContextMenuAction: () => {
+    ipcRenderer.removeAllListeners("context-menu-action");
+  },
 });

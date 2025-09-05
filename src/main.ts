@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol } from "electron";
+import { app, BrowserWindow, ipcMain, protocol, Menu } from "electron";
 import path from "node:path";
 import started from "electron-squirrel-startup";
 import { CreateChatProps } from "./types";
@@ -129,6 +129,24 @@ const createWindow = async () => {
       return await configManager.updateProviderConfig(providerName, values ?? {});
     },
   );
+  
+  // 右键菜单处理
+  ipcMain.on("show-context-menu", (event, conversationId, ) => {
+    const template = [
+      {
+        label: "删除对话",
+        click: () => {
+          mainWindow.webContents.send("context-menu-action", "delete", conversationId);
+        },
+      },
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup({
+      window: mainWindow,
+      
+    });
+  });
   
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

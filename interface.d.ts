@@ -25,6 +25,11 @@ export interface ElectronConfigAPI {
   onMenuOpenSettings: (callback: () => void) => void;
   removeMenuNewConversation: () => void;
   removeMenuOpenSettings: () => void;
+  
+  // 右键菜单
+  showContextMenu: (conversationId: number) => void;
+  onContextMenuAction: (callback: (action: string, conversationId: number) => void) => void;
+  removeContextMenuAction: () => void;
 }
 
 declare global {
